@@ -1,0 +1,102 @@
+import gym
+import numpy as np
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+
+from torch.autograd import Variable
+
+HIDDEN1 = 128
+
+class NNEstimator(nn.Module):
+
+    def __init__(self, input_size, output_size):
+        super(NNEstimator, self).__init__()
+        self.fc1 = nn.Linear(input_size, HIDDEN1)
+        self.fc2 = nn.Linear(HIDDEN1, output_size)
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x):
+        x = x.view(1, -1)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        x = self.softmax(x)
+        return x
+
+class VanillaPolicyGradientAgent:
+
+    def __init__(self, state_dim, actions_dim, discount_rate,
+                 learning_rate):
+        self.state_dim = state_dim
+        self.actions_dim = actions_dim
+        self.discount_rate = discount_rate
+        self.learning_rate = learning_rate
+        self.nn = NNEstimator(state_dim, actions_dim)
+        
+        self.b_logprobs = []
+        self.b_rewards = []
+        self.b_actions = []
+        
+        self.nn.zero_grad()
+
+    def discount_rewards(self, rewards):
+        disc_r = []
+        curr = 0
+        for t in reversed(range(0, len(rewards))):
+            curr = curr * self.discount_rate + rewards[t]
+            disc_r.append(curr)
+        disc_r.reverse()
+
+        disc_r = np.array(disc_r) - np.mean(disc_r)
+        disc_r /= np.std(disc_r) + np.finfo(np.float32).eps
+        
+        return disc_r
+
+    def update(self):
+        assert len(self.b_logprobs) == len(self.b_rewards)
+        
+        rewards = self.discount_rewards(self.b_rewards)
+        g = Variable(torch.zeros(1))
+        
+        for i, logprobs in enumerate(self.b_logprobs):
+            action = self.b_actions[i]
+
+            rews = torch.zeros(logprobs.size())
+            rews[0][action] = rewards[i]
+            rews = Variable(rews)
+            
+            g.add_(torch.dot(logprobs, rews))
+
+        #print(g)
+        g.backward()
+        
+        for f in self.nn.parameters():
+            f.data.add_(f.grad.data * self.learning_rate)
+            
+        self.nn.zero_grad()
+        self.b_logprobs = []
+        self.b_rewards = []
+
+    def get_probs(self, state):
+        state = np.expand_dims(state, axis=0)
+
+        tstate = torch.from_numpy(state)
+        tstate = tstate.type(torch.FloatTensor)
+
+        probs = self.nn.forward(Variable(tstate))
+
+        return probs
+
+    def get_action(self, state):
+        probs = self.get_probs(state)
+        action = 0 if np.random.sample() < probs.data[0][0] else 1
+        
+        self.b_logprobs.append(torch.log(probs))
+        self.b_actions.append(action)
+        
+        return action
+
+    def report_reward(self, reward):
+        self.b_rewards.append(reward)
