@@ -1,0 +1,11 @@
+import numpy as np
+
+class EvolutionStrategyAgent():
+
+    def __init__(self, lr=0.01, std=0.01, param_dim):
+        self.lr = lr
+        self.std = std
+        self.param_dim = param_dim
+
+    def 
+        
