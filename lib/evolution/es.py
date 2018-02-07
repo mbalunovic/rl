@@ -30,7 +30,7 @@ class EvolutionStrategyAgent():
         grad_estimate = np.mean(self.grads, axis=0)
         self.theta += self.lr * grad_estimate
         self.grads = []
-        #self.lr *= self.lr_decay
+        self.lr *= self.lr_decay
 
 
 
