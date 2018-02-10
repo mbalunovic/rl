@@ -15,17 +15,15 @@ class CrossEntropyNeuralAgent():
         self.alpha = 1.20
 
     def get_param_dim(self):
-        return 41
+        return 20
 
     def get_weights(self, param):
         assert(param.shape[0] == self.param_dim)
-        w1 = param[:12].reshape((4, 3))
-        b1 = param[12:16].reshape((4, 1))
-        w2 = param[16:32].reshape((4, 4))
-        b2 = param[32:36].reshape((4, 1))
-        w3 = param[36:40].reshape((1, 4))
-        b3 = param[40:41].reshape((1, 1))
-        return w1, w2, w3, b1, b2, b3
+        w1 = param[:8].reshape((4, 2))
+        b1 = param[8:12].reshape((4, 1))
+        w2 = param[12:16].reshape((1, 4))
+        b2 = param[16:20].reshape((4, 1))
+        return w1, w2, b1, b2
 
     # returns sample of parameters in shape (state_dim, actions_dim)
     def sample_theta(self):
@@ -52,16 +50,17 @@ class CrossEntropyNeuralAgent():
     # continuous action between -1 and 1
     def get_action_cont(self, state, theta):
         #x = np.dot(np.reshape(state, (1, self.state_dim)), theta)
-        w1, w2, w3, b1, b2, b3 = self.get_weights(theta)
+        w1, w2, b1, b2 = self.get_weights(theta)
         x = np.reshape(state, (self.state_dim, 1))
         x = np.tanh(np.dot(w1, x) + b1)
-        x = np.tanh(np.dot(w2, x) + b2)
-        x = np.tanh(np.dot(w3, x) + b3)
+        x = np.dot(w2, x) + b2
+        #x = np.tanh(np.dot(w3, x) + b3)
         x = x.reshape(-1)
         return x
 
     def refit(self):
         idx = list(range(len(self.all_thetas)))
+        
         idx.sort(key=lambda i: self.all_rewards[i])
         idx.reverse()
         idx = idx[:int(0.01 * len(idx))]
