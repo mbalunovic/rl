@@ -60,6 +60,10 @@ class NNContinuousPolicy(nn.Module):
             x = F.tanh(x)
         return x
 
+    # returns appropriate action given state
+    def get_action(self, state):
+        return self.forward(state)
+
     # moves neural net parameters in the direction of the gradient
     def update(learning_rate):
         for f in self.parameters():
