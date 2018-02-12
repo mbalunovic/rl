@@ -18,9 +18,12 @@ class ReplayBuffer():
 
     # samples minibatch of size k from replay buffer
     def sample_minibatch(self, k):
-        idx = np.random.choice(np.arange(self.buff), k, False)
-        return self.buff[idx]
+        idx = np.random.choice(np.arange(len(self.buff)), k, False)
+        ret = [self.buff[idx[i]] for i in range(k)]
+        return ret
 
+    def size(self):
+        return len(self.buff)
     
 
     

@@ -45,9 +45,11 @@ class NNContinuousPolicy(nn.Module):
 
     # receives x and calculates output of neural net on input x 
     def forward(self, x):
+        x = x.reshape((x.shape[0], -1))
         x = torch.from_numpy(x)
         x = x.type(torch.FloatTensor)
-        x = Variable(x.view(1, -1))
+        x = Variable(x)
+        #x = Variable(x.view(1, -1))
 
         first = True
         for i, fc in enumerate(self.layers):
@@ -61,14 +63,8 @@ class NNContinuousPolicy(nn.Module):
         return x
 
     # returns appropriate action given state
-    def get_action(self, state):
-        return self.forward(state)
-
-    # moves neural net parameters in the direction of the gradient
-    def update(learning_rate):
-        for f in self.parameters():
-            f.data.add_(f.grad.data * self.learning_rate)
-        self.zero_grad()
+    def get_action(self, states):
+        return self.forward(states)
     
         
         

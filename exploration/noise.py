@@ -1,0 +1,13 @@
+import numpy as np
+
+class OUProcess:
+
+    def __init__(self, theta=0.15, sigma=0.2):
+        self.theta = theta
+        self.sigma = sigma
+        self.x = 0
+
+    def sample(self):
+        self.x = -self.theta * self.x + self.sigma * np.random.randn()
+        return self.x
+    
